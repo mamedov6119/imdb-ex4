@@ -1,5 +1,6 @@
 package exercise4.cola;
 
+import java.io.IOException;
 import java.util.Iterator;
 
 import xxl.core.collections.containers.Container;
@@ -66,9 +67,35 @@ public class DiskLevel<K extends Comparable<K>, V> implements COLALevel<K, V> {
     @Override
     public V search(K key) {
         // TODO:
-        // Important: only load blocks for the actual lookup
+        long currentOffset = offset;
+        boolean blockFound = true;
 
-        return null;
+        while (blockFound) {
+            COLABlock<K, V> block = (COLABlock<K, V>) container.get(currentOffset);
+
+            int low = 0;
+            int high = block.getSize() - 1;
+
+            while (low <= high) {
+                int mid = low + (high - low) / 2;
+                Pair<K, V> midElement = block.get(mid);
+
+                int comparison = key.compareTo(midElement.getFirst());
+                if (comparison == 0) {
+                    return midElement.getSecond(); // Key found
+                } else if (comparison < 0) {
+                    high = mid - 1; // Search left half
+                } else {
+                    low = mid + 1; // Search right half
+                }
+            }
+
+            // Key not found in this block, move to the next block if it exists
+            currentOffset += elemsPerBlock;
+            blockFound = currentOffset < container.size();
+        }
+
+        return null; // Key not found
     }
 
     @Override

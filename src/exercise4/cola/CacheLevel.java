@@ -54,8 +54,24 @@ public class CacheLevel<K extends Comparable<K>, V> implements COLALevel<K, V> {
     @Override
     public V search(K key) {
         // TODO:
+        int low = fromIndex;
+        int high = toIndex - 1;
 
-        return null;
+        while (low<=high) {
+            int mid = low + (high - low) / 2;
+            Pair<K, V> midElement = block.get(mid);
+
+            int comparison = key.compareTo(midElement.getFirst());
+            if (comparison == 0) {
+                return midElement.getSecond(); // Key found
+            } else if (comparison < 0) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return null; // Key not found
     }
 
     @Override
