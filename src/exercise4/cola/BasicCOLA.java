@@ -91,14 +91,31 @@ public class BasicCOLA<K extends Comparable<K>, V> {
             public COLABlock<K, V> read(DataInput dataInput, COLABlock<K, V> block) throws IOException {
                 block = new COLABlock<>(elementsPerBlock);
                 // TODO: read from dataInput to construct a COLABlock
-
+                for (int i = 0; i < elementsPerBlock; i++) {
+                    try {
+                        K key = keyConverter.read(dataInput);
+                        V value = valueConverter.read(dataInput);
+                        block.set(i, new Pair<>(key, value));
+                    } catch (IOException e) {
+                        break;
+                    }
+                }
                 return block;
             }
 
             @Override
             public void write(DataOutput dataOutput, COLABlock<K, V> object) throws IOException {
                 // TODO: write a COLABlock to dataOutput
-
+                for (int i = 0; i < elementsPerBlock; i++) {
+                    Pair<K,V> element = object.get(i);
+                    if (element != null) {
+                        keyConverter.write(dataOutput, element.getFirst());
+                        valueConverter.write(dataOutput, element.getSecond());
+                    } else {
+                        keyConverter.write(dataOutput, null);
+                        valueConverter.write(dataOutput, null);
+                    }
+                }
             }
         });
     }
