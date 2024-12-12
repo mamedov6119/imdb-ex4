@@ -29,13 +29,30 @@ public class Table {
      * Insert a row into the table by assigning a new TID and adding it to all primary/secondary indexes.
      */
     public void insert(Row row) {
-        // TODO
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO: inserts a row into the primary index and all existing secondary indexes.
+        long tid = this.primaryIndex.insert(row);
+        for (int i = 0; i < this.secondaryIndexes.length; i++) {
+            if (this.secondaryIndexes[i] != null) {
+                this.secondaryIndexes[i].insert(row.getColumn(i), tid);
+            }
+        }
+
+//        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public boolean remove(ResultSet resultSet) {
-        // TODO
-        throw new UnsupportedOperationException("Not supported yet.");
+        // TODO:  removes all rows in set from the primary and all secondary indexes
+        resultSet.getTids().forEach(tid -> {
+            Row row = this.primaryIndex.get(tid);
+            this.primaryIndex.remove(tid);
+            for (int i = 0; i < this.secondaryIndexes.length; i++) {
+                if (this.secondaryIndexes[i] != null) {
+                    this.secondaryIndexes[i].remove(tid, row.getColumn(i));
+                }
+            }
+        });
+        return true;
+//        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
