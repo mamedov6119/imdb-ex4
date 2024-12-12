@@ -11,6 +11,8 @@ import xxl.core.collections.containers.io.ConverterContainer;
 import xxl.core.cursors.unions.Merger;
 import xxl.core.functions.Constant;
 import xxl.core.io.converters.Converter;
+import xxl.core.io.converters.DoubleConverter;
+import xxl.core.io.converters.LongConverter;
 import xxl.core.util.Pair;
 
 /**
@@ -107,15 +109,31 @@ public class BasicCOLA<K extends Comparable<K>, V> {
             public void write(DataOutput dataOutput, COLABlock<K, V> object) throws IOException {
                 // TODO: write a COLABlock to dataOutput
                 for (int i = 0; i < elementsPerBlock; i++) {
-                    Pair<K,V> element = object.get(i);
-                    if (element != null) {
+                    Pair<K, V> element = (i < object.getSize()) ? object.get(i) : null;
+                    if (element != null && element.getFirst() != null && element.getSecond() != null) {
                         keyConverter.write(dataOutput, element.getFirst());
                         valueConverter.write(dataOutput, element.getSecond());
                     } else {
-                        keyConverter.write(dataOutput, null);
-                        valueConverter.write(dataOutput, null);
+                        K defaultKey = getDefaultKey();
+                        V defaultValue = getDefaultValue();
+                        keyConverter.write(dataOutput, defaultKey);
+                        valueConverter.write(dataOutput, defaultValue);
                     }
                 }
+            }
+
+            private K getDefaultKey() {
+                if (keyConverter instanceof LongConverter) {
+                    return (K) Long.valueOf(0);
+                }
+                return null;
+            }
+
+            private V getDefaultValue() {
+                if (valueConverter instanceof DoubleConverter) {
+                    return (V) Double.valueOf(0.0);
+                }
+                return null;
             }
         });
     }
@@ -213,7 +231,21 @@ public class BasicCOLA<K extends Comparable<K>, V> {
      */
     public V searchElement(K key) throws NoSuchElementException {
         // TODO: impl. top to bottom search
+        for (int level = 0; level < filled.size(); level++) {
+            if (!filled.get(level)) {
+                System.out.println("Level " + level + " is empty, skipping.");
+                continue;
+            }
 
+            COLALevel<K, V> currentLevel = getLevel(level);
+
+            // Search within this level
+            for (Pair<K, V> pair : currentLevel) {
+                if (pair.getFirst().equals(key)) {
+                    return pair.getSecond();
+                }
+            }
+        }
         throw new NoSuchElementException("No Entry found for Key: " + key);
     }
 

@@ -50,13 +50,24 @@ public class Main {
         input.close();
 
         // Search for the first and last inserted elements
-        long key = 1325458800000L;
-        System.out.println("Searching key: " + key + ", result: " + cola.searchElement(key));
-        key = 1262127600000L;
-        System.out.println("Searching key: " + key + ", result: " + cola.searchElement(key));
+        long key1 = 1325458800000L;
+        System.out.println("Searching key: " + key1 + ", result: " + cola.searchElement(key1));
+        long key2 = 1262127600000L;
+        System.out.println("Searching key: " + key2 + ", result: " + cola.searchElement(key2));
 
         // TODO: benchmark the search for the first and the last inserted keys
+        System.out.println("Starting benchmark...");
+        benchmarkSearch(cola, key1);
+        benchmarkSearch(cola, key2);
 
         cola.close();
+    }
+
+    private static void benchmarkSearch(BasicCOLA<Long, Double> cola, long key) {
+        long startTime = System.nanoTime();
+        Double result = cola.searchElement(key);
+        long endTime = System.nanoTime();
+        System.out.println("Searching key: " + key + ", result: " + result +
+                ", time taken: " + (endTime - startTime) + " ns");
     }
 }
