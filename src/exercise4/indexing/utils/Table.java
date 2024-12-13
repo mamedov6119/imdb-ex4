@@ -4,6 +4,8 @@ package exercise4.indexing.utils;
 import exercise4.indexing.primary.PrimaryIndex;
 import exercise4.indexing.secondary.SecondaryIndex;
 
+import java.util.*;
+
 public class Table {
     private final Schema schema;
     private final PrimaryIndex primaryIndex;
@@ -60,7 +62,20 @@ public class Table {
      */
     public ResultSet pointQueryAtColumn(int columnIndex, Object value) {
         // TODO
-        throw new UnsupportedOperationException("Not supported yet.");
+        List<Long> tids;
+        if (this.secondaryIndexes[columnIndex] != null) {
+            tids = this.secondaryIndexes[columnIndex].get(value);
+        } else {
+            tids = new ArrayList<>();
+            this.primaryIndex.scan().forEach(entry -> {
+                if (entry.getValue().getColumn(columnIndex).equals(value)) {
+                    tids.add(entry.getKey());
+                }
+            });
+        }
+
+        Set<Long> uniqueTids = new HashSet<>(tids);
+        return new ResultSet(this.primaryIndex, uniqueTids);
     }
 
     /**
@@ -68,6 +83,21 @@ public class Table {
      */
     public ResultSet rangeQueryAtColumn(int columnIndex, Object from, Object to) {
         // TODO
-        throw new UnsupportedOperationException("Not supported yet.");
+        List<Long> tids;
+        if (this.secondaryIndexes[columnIndex] != null) {
+            tids = this.secondaryIndexes[columnIndex].getRange(from, to);
+        } else {
+            tids = new ArrayList<>();
+            Comparator<Object> comparator = this.schema.getComparatorOfColumn(columnIndex); // Get the comparator
+            this.primaryIndex.scan().forEach(entry -> {
+                Object value = entry.getValue().getColumn(columnIndex);
+                if (comparator.compare(value, from) >= 0 && comparator.compare(value, to) < 0) {
+                    tids.add(entry.getKey());
+                }
+            });
+        }
+
+        Set<Long> uniqueTids = new HashSet<>(tids);
+        return new ResultSet(this.primaryIndex, uniqueTids);
     }
 }
